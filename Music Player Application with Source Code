@@ -1,0 +1,120 @@
+Code Is give Below
+import os
+import random
+import tkinter as tk
+from tkinter import filedialog
+import pygame
+
+class MusicPlayer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Music Player")
+        self.root.geometry("400x200")
+
+        pygame.init()
+        pygame.mixer.init()
+
+        self.playlist = []
+        self.current_index = 0
+        self.is_shuffle = False
+        self.is_repeat = False
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Playlist ListBox
+        self.playlist_box = tk.Listbox(self.root, selectmode=tk.SINGLE)
+        self.playlist_box.pack(fill=tk.BOTH, expand=True)
+        self.playlist_box.bind("<Double-Button-1>", self.play_selected)
+
+        # Buttons
+        self.play_btn = tk.Button(self.root, text="Play", command=self.play_music)
+        self.play_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.pause_btn = tk.Button(self.root, text="Pause", command=self.pause_music)
+        self.pause_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.stop_btn = tk.Button(self.root, text="Stop", command=self.stop_music)
+        self.stop_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.prev_btn = tk.Button(self.root, text="Previous", command=self.play_previous)
+        self.prev_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.next_btn = tk.Button(self.root, text="Next", command=self.play_next)
+        self.next_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.add_btn = tk.Button(self.root, text="Add to Playlist", command=self.add_to_playlist)
+        self.add_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Volume Control
+        self.volume_scale = tk.Scale(self.root, from_=0, to=100, orient=tk.HORIZONTAL, label="Volume",
+                                     command=self.set_volume)
+        self.volume_scale.set(50)  # Default volume
+        self.volume_scale.pack(padx=10, pady=10)
+
+        # Shuffle and Repeat Buttons
+        self.shuffle_btn = tk.Button(self.root, text="Shuffle", command=self.toggle_shuffle)
+        self.shuffle_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.repeat_btn = tk.Button(self.root, text="Repeat", command=self.toggle_repeat)
+        self.repeat_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+    def play_music(self):
+        if not pygame.mixer.music.get_busy() and self.playlist:
+            pygame.mixer.music.load(self.playlist[self.current_index])
+            pygame.mixer.music.set_volume(self.volume_scale.get() / 100)
+            pygame.mixer.music.play()
+
+    def pause_music(self):
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.pause()
+
+    def stop_music(self):
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.stop()
+
+    def play_next(self):
+        if self.is_shuffle:
+            self.current_index = random.randint(0, len(self.playlist) - 1)
+        else:
+            self.current_index += 1
+            if self.current_index >= len(self.playlist):
+                self.current_index = 0
+
+        self.play_music()
+
+    def play_previous(self):
+        if self.is_shuffle:
+            self.current_index = random.randint(0, len(self.playlist) - 1)
+        else:
+            self.current_index -= 1
+            if self.current_index < 0:
+                self.current_index = len(self.playlist) - 1
+
+        self.play_music()
+
+    def add_to_playlist(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Audio Files", "*.mp3")])
+        if file_path:
+            self.playlist.append(file_path)
+            self.playlist_box.insert(tk.END, os.path.basename(file_path))
+
+    def play_selected(self, event):
+        selection_index = self.playlist_box.curselection()
+        if selection_index:
+            self.current_index = selection_index[0]
+            self.play_music()
+
+    def set_volume(self, value):
+        pygame.mixer.music.set_volume(float(value) / 100)
+
+    def toggle_shuffle(self):
+        self.is_shuffle = not self.is_shuffle
+
+    def toggle_repeat(self):
+        self.is_repeat = not self.is_repeat
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    music_player = MusicPlayer(root)
+    root.mainloop()
